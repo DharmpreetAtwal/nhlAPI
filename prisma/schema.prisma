@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model game {
+  game_id                                BigInt               @id
+  season                                 Int
+  type                                   String               @db.Char(1)
+  date_time_gmt                          DateTime             @db.Timestamptz(6)
+  away_team_id                           Int
+  home_team_id                           Int
+  away_goals                             Int
+  home_goals                             Int
+  outcome                                String               @db.VarChar(20)
+  home_rink_side_start                   String?              @db.VarChar(5)
+  venue                                  String?              @db.VarChar(100)
+  venue_link                             String?
+  venue_time_zone_id                     String?              @db.VarChar(50)
+  venue_time_zone_offset                 Int?
+  venue_time_zone_tz                     String?              @db.VarChar(5)
+  team_info_game_away_team_idToteam_info team_info            @relation("game_away_team_idToteam_info", fields: [away_team_id], references: [team_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_game_away_team")
+  team_info_game_home_team_idToteam_info team_info            @relation("game_home_team_idToteam_info", fields: [home_team_id], references: [team_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_game_home_team")
+  game_goalie_stats                      game_goalie_stats[]
+  game_officials                         game_officials[]
+  game_plays                             game_plays[]
+  game_plays_players                     game_plays_players[]
+  game_scratches                         game_scratches[]
+  game_shifts                            game_shifts[]
+  game_skater_stats                      game_skater_stats[]
+  game_team_stats                        game_team_stats[]
+}
+
+model game_goalie_stats {
+  game_id                       BigInt
+  player_id                     Int
+  team_id                       Int
+  time_on_ice                   Int
+  assists                       Int?
+  goals                         Int?
+  pim                           Int?
+  shots                         Int?
+  saves                         Int?
+  power_play_saves              Int?
+  short_handed_saves            Int?
+  even_saves                    Int?
+  short_handed_shots_against    Int?
+  even_shots_against            Int?
+  power_play_shots_against      Int?
+  decision                      String?     @db.Char(1)
+  save_percentage               Decimal?    @db.Decimal(6, 3)
+  power_play_save_percentage    Decimal?    @db.Decimal(6, 3)
+  even_strength_save_percentage Decimal?    @db.Decimal(6, 3)
+  game                          game        @relation(fields: [game_id], references: [game_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ggs_game")
+  player_info                   player_info @relation(fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ggs_player")
+  team_info                     team_info   @relation(fields: [team_id], references: [team_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ggs_team")
+
+  @@id([game_id, player_id], map: "pk_game_goalie_stats")
+}
+
+model game_goals {
+  play_id         String     @id
+  strength        String?    @db.VarChar(20)
+  gamewinninggoal Boolean?
+  emptynet        Boolean?
+  game_plays      game_plays @relation(fields: [play_id], references: [play_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gg_play")
+}
+
+model game_officials {
+  game_id       BigInt
+  official_name String @db.VarChar(100)
+  official_type String @db.VarChar(50)
+  game          game   @relation(fields: [game_id], references: [game_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([game_id, official_name, official_type])
+}
+
+model game_penalties {
+  play_id          String     @id
+  penalty_severity String?    @db.VarChar(50)
+  penalty_minutes  Int?
+  game_plays       game_plays @relation(fields: [play_id], references: [play_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gp_play")
+}
+
+model game_plays {
+  play_id                                         String               @id
+  game_id                                         BigInt
+  team_id_for                                     Int?
+  team_id_against                                 Int?
+  event                                           String
+  secondary_type                                  String?
+  x                                               Decimal?             @db.Decimal(6, 2)
+  y                                               Decimal?             @db.Decimal(6, 2)
+  period                                          Int
+  period_type                                     String
+  period_time                                     Int
+  period_time_remaining                           Int?
+  event_datetime                                  DateTime             @db.Timestamp(6)
+  goals_away                                      Int
+  goals_home                                      Int
+  description                                     String?
+  st_x                                            Decimal?             @db.Decimal(6, 2)
+  st_y                                            Decimal?             @db.Decimal(6, 2)
+  game_goals                                      game_goals?
+  game_penalties                                  game_penalties?
+  game                                            game                 @relation(fields: [game_id], references: [game_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gp_game")
+  team_info_game_plays_team_id_againstToteam_info team_info?           @relation("game_plays_team_id_againstToteam_info", fields: [team_id_against], references: [team_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gp_team_against")
+  team_info_game_plays_team_id_forToteam_info     team_info?           @relation("game_plays_team_id_forToteam_info", fields: [team_id_for], references: [team_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gp_team_for")
+  game_plays_players                              game_plays_players[]
+}
+
+model game_plays_players {
+  play_id     String
+  game_id     BigInt
+  player_id   Int
+  player_type String
+  game        game        @relation(fields: [game_id], references: [game_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gpp_game")
+  game_plays  game_plays  @relation(fields: [play_id], references: [play_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gpp_play")
+  player_info player_info @relation(fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gpp_player")
+
+  @@id([play_id, player_id, player_type])
+}
+
+model game_scratches {
+  game_id     BigInt
+  team_id     Int
+  player_id   Int
+  game        game        @relation(fields: [game_id], references: [game_id], onDelete: NoAction, onUpdate: NoAction)
+  player_info player_info @relation(fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
+  team_info   team_info   @relation(fields: [team_id], references: [team_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([game_id, team_id, player_id])
+}
+
+model game_shifts {
+  game_id     BigInt
+  player_id   Int
+  period      Int
+  shift_start Int
+  shift_end   Int?
+  game        game        @relation(fields: [game_id], references: [game_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gs_game")
+  player_info player_info @relation(fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gs_player")
+
+  @@id([game_id, player_id, period, shift_start], map: "pk_game_shifts")
+}
+
+model game_skater_stats {
+  game_id                  BigInt
+  player_id                Int
+  team_id                  Int
+  time_on_ice              Int
+  assists                  Int?
+  goals                    Int?
+  shots                    Int?
+  hits                     Int?
+  power_play_goals         Int?
+  power_play_assists       Int?
+  penalty_minutes          Int?
+  faceoff_wins             Int?
+  faceoffs_taken           Int?
+  takeaways                Int?
+  giveaways                Int?
+  short_handed_goals       Int?
+  short_handed_assists     Int?
+  blocked                  Int?
+  plus_minus               Int?
+  even_time_on_ice         Int?
+  short_handed_time_on_ice Int?
+  power_play_time_on_ice   Int?
+  game                     game        @relation(fields: [game_id], references: [game_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gss_game")
+  player_info              player_info @relation(fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gss_player")
+  team_info                team_info   @relation(fields: [team_id], references: [team_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gss_team")
+
+  @@id([game_id, player_id], map: "pk_game_skater_stats")
+}
+
+model game_team_stats {
+  game_id                  BigInt
+  team_id                  Int
+  hoa                      String    @db.VarChar(4)
+  won                      Boolean
+  settled_in               String    @db.VarChar(3)
+  head_coach               String?   @db.VarChar(100)
+  goals                    Int?
+  shots                    Int?
+  hits                     Int?
+  pim                      Int?
+  power_play_opportunities Int?
+  power_play_goals         Int?
+  faceoff_win_percentage   Decimal?  @db.Decimal(5, 2)
+  giveaways                Int?
+  takeaways                Int?
+  blocked                  Int?
+  start_rink_side          String?   @db.VarChar(5)
+  game                     game      @relation(fields: [game_id], references: [game_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gts_game")
+  team_info                team_info @relation(fields: [team_id], references: [team_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_gts_team")
+
+  @@id([game_id, team_id], map: "pk_game_team_stats")
+}
+
+model player_info {
+  player_id            Int                  @id
+  first_name           String               @db.VarChar(50)
+  last_name            String               @db.VarChar(50)
+  nationality          String?              @db.Char(3)
+  birth_city           String?              @db.VarChar(100)
+  primary_position     String               @db.VarChar(5)
+  birth_date           DateTime             @db.Timestamp(6)
+  birth_state_province String?              @db.VarChar(50)
+  height               String?              @db.VarChar(10)
+  height_cm            Decimal?             @db.Decimal(6, 2)
+  weight               Decimal?             @db.Decimal(5, 1)
+  shoots_catches       String?              @db.Char(1)
+  game_goalie_stats    game_goalie_stats[]
+  game_plays_players   game_plays_players[]
+  game_scratches       game_scratches[]
+  game_shifts          game_shifts[]
+  game_skater_stats    game_skater_stats[]
+}
+
+model team_info {
+  team_id                                          Int                 @id
+  franchise_id                                     Int
+  short_name                                       String              @db.VarChar(50)
+  team_name                                        String              @db.VarChar(50)
+  abbreviation                                     String              @db.Char(3)
+  link_str                                         String
+  game_game_away_team_idToteam_info                game[]              @relation("game_away_team_idToteam_info")
+  game_game_home_team_idToteam_info                game[]              @relation("game_home_team_idToteam_info")
+  game_goalie_stats                                game_goalie_stats[]
+  game_plays_game_plays_team_id_againstToteam_info game_plays[]        @relation("game_plays_team_id_againstToteam_info")
+  game_plays_game_plays_team_id_forToteam_info     game_plays[]        @relation("game_plays_team_id_forToteam_info")
+  game_scratches                                   game_scratches[]
+  game_skater_stats                                game_skater_stats[]
+  game_team_stats                                  game_team_stats[]
+}
