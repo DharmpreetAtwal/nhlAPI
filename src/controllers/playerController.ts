@@ -5,6 +5,7 @@ import { parseIntegerUndefinedParam } from "../helpers/parseNumericUndefinedPara
 import { IntegerParseError } from "../errors/numericParseError";
 import { parseCountryCode } from "../helpers/parseCountryCode";
 import { CountryCodeParseError } from "../errors/countryCodeParseError";
+import { logger } from "../config/logger";
 
 export class PlayerController {
     static getAllPlayers = async (req: Request, res: Response) => {
@@ -19,8 +20,7 @@ export class PlayerController {
             if (error instanceof IntegerParseError) {
                 return res.status(400).json({ success: false, message: error.message })
             } else {
-                // Log the actual error for debugging (in production, use a proper logger)
-                console.error('Unexpected error in getAllPlayers:', error)
+                logger.error('Unexpected error in getAllPlayers:', error)
                 return res.status(500).json({ success: false, message: "An internal server error occurred" })
             }
         }
@@ -44,8 +44,7 @@ export class PlayerController {
             if (error instanceof IntegerParseError) {
                 return res.status(400).json({ success: false, message: error.message })
             } else {
-                // Log the actual error for debugging (in production, use a proper logger)
-                console.error('Unexpected error in getPlayerById:', error)
+                logger.error('Unexpected error in getPlayerById:', error)
                 return res.status(500).json({ success: false, message: "An internal server error occurred" })
             }
         }
@@ -66,8 +65,7 @@ export class PlayerController {
             } else if (error instanceof CountryCodeParseError) {
                 return res.status(400).json({ success: false, message: error.message })
             } else {
-                // Log the actual error for debugging (in production, use a proper logger)
-                console.error('Unexpected error in getPlayersByNationality:', error)
+                logger.error('Unexpected error in getPlayersByNationality:', error)
                 return res.status(500).json({ success: false, message: "An internal server error occurred" })
             }
         }
