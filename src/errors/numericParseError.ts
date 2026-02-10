@@ -1,6 +1,6 @@
-export class NumericParseError extends Error {
+export class IntegerParseError extends Error {
     constructor(message = "") {
         super(message);
-        this.message = message
+        this.name = "IntegerParseError"
     }
 }

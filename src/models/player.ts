@@ -27,23 +27,31 @@ export class PlayerModel {
 
         return {
             data: players,
-            nextCursor: players.length == limit ? players[limit - 1].player_id : null
+            nextCursor: players.length == limit ? players[players.length - 1].player_id : null
         }
     }
 
     static getByID = async (id: number) => {
-        return await prisma.player_info.findUniqueOrThrow({
+        return await prisma.player_info.findUnique({
             where: {
                 player_id: id
             }
         })
     }
 
-    static getAll = async () => {
-        return await prisma.player_info.findMany({
+    static getAll = async (limit: number = 10, cursor?: number) => {
+        const players = await prisma.player_info.findMany({
+            take: limit,
+            skip: cursor ? 1 : 0,
+            cursor: cursor ? { player_id: cursor } : undefined,
             orderBy: {
-                first_name: "asc"
+                player_id: "asc"
             }
         })
+
+        return {
+            data: players,
+            nextCursor: players.length == limit ? players[players.length - 1].player_id : null
+        }
     }
 }
