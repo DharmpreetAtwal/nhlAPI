@@ -1,35 +1,27 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { PlayerModel } from "../models/player";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { parseIntegerUndefinedParam } from "../helpers/parseNumericUndefinedParam";
-import { IntegerParseError } from "../errors/numericParseError";
 import { parseCountryCode } from "../helpers/parseCountryCode";
-import { CountryCodeParseError } from "../errors/countryCodeParseError";
-import { logger } from "../config/logger";
 
 export class PlayerController {
-    static getAllPlayers = async (req: Request, res: Response) => {
+    static getAllPlayers = async (req: Request, res: Response, next: NextFunction) => {
         try {
             let limit = parseIntegerUndefinedParam(req.query.limit, "limit")
             if(limit && limit > 20) { limit = 20 }
 
             const nextCursor = parseIntegerUndefinedParam(req.query.nextCursor, "nextCursor")
             const players = await PlayerModel.getAll(limit, nextCursor)
-            return res.json({ success: true, data: players })
+            return res.status(200).json({ success: true, data: players })
         } catch(error) {
-            if (error instanceof IntegerParseError) {
-                return res.status(400).json({ success: false, message: error.message })
-            } else {
-                logger.error('Unexpected error in getAllPlayers:', error)
-                return res.status(500).json({ success: false, message: "An internal server error occurred" })
-            }
+            next(error)
         }
     }
 
-    static getPlayerById = async (req: Request, res: Response) => {
+    static getPlayerById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const id = parseIntegerUndefinedParam(req.params.id, "id")
-            if(!id) {
+            if(id === undefined) {
                 return res.status(400).json({ success: false, message: `The parameter id must be defined.` })
             }
 
@@ -39,18 +31,12 @@ export class PlayerController {
             }
 
             return res.status(200).json({ success: true, data: player })
-
         } catch(error) {
-            if (error instanceof IntegerParseError) {
-                return res.status(400).json({ success: false, message: error.message })
-            } else {
-                logger.error('Unexpected error in getPlayerById:', error)
-                return res.status(500).json({ success: false, message: "An internal server error occurred" })
-            }
+            next(error)
         }
     }
 
-    static getPlayersByNationality = async (req: Request, res: Response) => {
+    static getPlayersByNationality = async (req: Request, res: Response, next: NextFunction) => {
         try {
             let limit = parseIntegerUndefinedParam(req.query.limit, "limit")
             if(limit && limit > 20) { limit = 20 }
@@ -60,14 +46,7 @@ export class PlayerController {
             const players = await PlayerModel.getByNationality(nation, limit, nextCursor)
             return res.status(200).json({ success: true, data: players })
         } catch(error) {
-            if (error instanceof IntegerParseError) {
-                return res.status(400).json({ success: false, message: error.message })
-            } else if (error instanceof CountryCodeParseError) {
-                return res.status(400).json({ success: false, message: error.message })
-            } else {
-                logger.error('Unexpected error in getPlayersByNationality:', error)
-                return res.status(500).json({ success: false, message: "An internal server error occurred" })
-            }
+            next(error)
         }
     }
 }
