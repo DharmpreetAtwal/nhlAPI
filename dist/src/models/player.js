@@ -15,9 +15,9 @@ PlayerModel.getAllNations = async () => {
         distinct: ['nationality']
     });
 };
-PlayerModel.getByNationality = async (nation, cursor, pageSize = 10) => {
+PlayerModel.getByNationality = async (nation, limit = 10, cursor) => {
     const players = await prisma_1.prisma.player_info.findMany({
-        take: pageSize,
+        take: limit,
         skip: cursor ? 1 : 0,
         cursor: cursor ? { player_id: cursor } : undefined,
         where: {
@@ -29,20 +29,27 @@ PlayerModel.getByNationality = async (nation, cursor, pageSize = 10) => {
     });
     return {
         data: players,
-        next_cursor: players.length == pageSize ? players[pageSize - 1].player_id : null
+        nextCursor: players.length == limit ? players[players.length - 1].player_id : null
     };
 };
 PlayerModel.getByID = async (id) => {
-    return await prisma_1.prisma.player_info.findUniqueOrThrow({
+    return await prisma_1.prisma.player_info.findUnique({
         where: {
             player_id: id
         }
     });
 };
-PlayerModel.getAll = async () => {
-    return await prisma_1.prisma.player_info.findMany({
+PlayerModel.getAll = async (limit = 10, cursor) => {
+    const players = await prisma_1.prisma.player_info.findMany({
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { player_id: cursor } : undefined,
         orderBy: {
-            first_name: "asc"
+            player_id: "asc"
         }
     });
+    return {
+        data: players,
+        nextCursor: players.length == limit ? players[players.length - 1].player_id : null
+    };
 };

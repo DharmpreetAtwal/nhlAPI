@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { IntegerParseError } from "../errors/numericParseError";
-import { CountryCodeParseError } from "../errors/countryCodeParseError";
 import { logger } from "../config/logger";
+import { HttpClientError } from "../errors/httpClientErrors";
 
 export const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction) => {
-    if(error instanceof IntegerParseError || error instanceof CountryCodeParseError) {
-        return res.status(400).json({
+    if(error instanceof HttpClientError) {
+        return res.status(error.statusCode).json({
             success: false,
             message: error.message
         })
