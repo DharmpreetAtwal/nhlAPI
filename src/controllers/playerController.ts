@@ -1,4 +1,3 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { PlayerModel } from "../models/player";
 import { NextFunction, Request, Response } from "express";
 import { parseIntegerUndefinedParam } from "../helpers/parseNumericUndefinedParam";
