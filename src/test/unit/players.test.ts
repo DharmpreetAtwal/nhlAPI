@@ -1,9 +1,9 @@
 import request from 'supertest';
-import { app } from '../app';
-import { PlayerModel } from '../models/player';
+import { app } from '../../app';
+import { PlayerModel } from '../../models/player';
 import { mockPlayers } from './mockPlayers';
 
-jest.mock('../models/player');
+jest.mock('../../models/player');
 
 describe('GET /v1/players/all', () => {
   beforeEach(() => {
@@ -27,7 +27,7 @@ describe('GET /v1/players/all', () => {
           nextCursor: null,
         },
       });
-      expect(PlayerModel.getAll).toHaveBeenCalledWith(undefined, undefined);
+      expect(PlayerModel.getAll).toHaveBeenCalledWith(10, undefined);
     });
 
     it('should return players with valid limit parameter', async () => {
@@ -93,7 +93,7 @@ describe('GET /v1/players/all', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(PlayerModel.getAll).toHaveBeenCalledWith(undefined, 0);
+      expect(PlayerModel.getAll).toHaveBeenCalledWith(10, 0);
     });
   });
 
@@ -265,7 +265,7 @@ describe('GET /v1/players/nations', () => {
         }
       })
       
-      expect(PlayerModel.getByNationality).toHaveBeenCalledWith("CAN", undefined, undefined)
+      expect(PlayerModel.getByNationality).toHaveBeenCalledWith("CAN", 10, undefined)
     })
 
     it('should return Canadian players with valid limit parameter', async () => {
@@ -322,7 +322,7 @@ describe('GET /v1/players/nations', () => {
           nextCursor: null
         }
       })
-      expect(PlayerModel.getByNationality).toHaveBeenCalledWith("USA", undefined, undefined)
+      expect(PlayerModel.getByNationality).toHaveBeenCalledWith("USA", 10, undefined)
     })
 
     it('should return players with valid limit and nextCursor parameters', async () => {
@@ -360,7 +360,7 @@ describe('GET /v1/players/nations', () => {
           nextCursor: null
         }
       })
-      expect(PlayerModel.getByNationality).toHaveBeenCalledWith("USA", undefined, 0)
+      expect(PlayerModel.getByNationality).toHaveBeenCalledWith("USA", 10, 0)
     })
 
   })
@@ -546,7 +546,7 @@ describe('GET /v1/players/all', () => {
           nextCursor: null,
         },
       })
-      expect(PlayerModel.getAll).toHaveBeenCalledWith(undefined, undefined)
+      expect(PlayerModel.getAll).toHaveBeenCalledWith(10, undefined)
     })
 
     it('should return players with valid limit parameter', async () => {
@@ -611,7 +611,7 @@ describe('GET /v1/players/all', () => {
 
       expect(response.status).toBe(200)
       expect(response.body.success).toBe(true)
-      expect(PlayerModel.getAll).toHaveBeenCalledWith(undefined, 0)
+      expect(PlayerModel.getAll).toHaveBeenCalledWith(10, 0)
     })
   })
 

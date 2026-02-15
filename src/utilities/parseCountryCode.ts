@@ -18,7 +18,7 @@ export function parseCountryCode(
     }
 
     if (!value.match(/^[A-Za-z]{3}$/)) {
-        throw new CountryCodeParseError(`The parameter nation='${value}' must be 3 letters`)
+        throw new CountryCodeParseError(`The parameter ${paramName}='${value}' must be 3 letters`)
     }
 
     return value.toUpperCase()

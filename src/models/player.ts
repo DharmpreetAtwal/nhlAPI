@@ -11,7 +11,7 @@ export class PlayerModel {
         })
     }
 
-    static getByNationality = async (nation: string, limit: number = 10, cursor?: number) => {
+    static getByNationality = async (nation: string, limit: number, cursor?: number) => {
         const players = await prisma.player_info.findMany({
             take: limit,
             skip: cursor ? 1 : 0,
@@ -39,7 +39,7 @@ export class PlayerModel {
         })
     }
 
-    static getAll = async (limit: number = 10, cursor?: number) => {
+    static getAll = async (limit: number, cursor?: number) => {
         const players = await prisma.player_info.findMany({
             take: limit,
             skip: cursor ? 1 : 0,

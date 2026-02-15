@@ -1,16 +1,14 @@
-import { PlayerModel } from "../models/player";
+import { PlayerService } from "../services/playerService";
 import { NextFunction, Request, Response } from "express";
-import { parseIntegerUndefinedParam } from "../helpers/parseNumericUndefinedParam";
-import { parseCountryCode } from "../helpers/parseCountryCode";
+import { parseIntegerUndefinedParam } from "../utilities/parseNumericUndefinedParam";
+import { parseCountryCode } from "../utilities/parseCountryCode";
 
 export class PlayerController {
     static getAllPlayers = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            let limit = parseIntegerUndefinedParam(req.query.limit, "limit")
-            if(limit && limit > 20) { limit = 20 }
-
+            const limit = parseIntegerUndefinedParam(req.query.limit, "limit")
             const nextCursor = parseIntegerUndefinedParam(req.query.nextCursor, "nextCursor")
-            const players = await PlayerModel.getAll(limit, nextCursor)
+            const players = await PlayerService.getAllPlayers(limit, nextCursor)
             return res.status(200).json({ success: true, data: players })
         } catch(error) {
             next(error)
@@ -24,7 +22,7 @@ export class PlayerController {
                 return res.status(400).json({ success: false, message: `The parameter id must be defined.` })
             }
 
-            const player = await PlayerModel.getByID(id)
+            const player = PlayerService.getPlayerById(id)
             if(!player) {
                 return res.status(404).json({ success: false, message: `The player with id='${id}' was not found.` })
             }
@@ -37,12 +35,11 @@ export class PlayerController {
 
     static getPlayersByNationality = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            let limit = parseIntegerUndefinedParam(req.query.limit, "limit")
-            if(limit && limit > 20) { limit = 20 }
-
+            const limit = parseIntegerUndefinedParam(req.query.limit, "limit")
             const nextCursor = parseIntegerUndefinedParam(req.query.nextCursor, "nextCursor")
             const nation = parseCountryCode(req.params.nation, "nation")
-            const players = await PlayerModel.getByNationality(nation, limit, nextCursor)
+
+            const players = await PlayerService.getPlayersByNationality(nation, limit, nextCursor)
             return res.status(200).json({ success: true, data: players })
         } catch(error) {
             next(error)
