@@ -8,17 +8,17 @@ describe('GET /v1/players/all (Integration)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('data');
-      expect(response.body.data).toHaveProperty('data');
-      expect(response.body.data).toHaveProperty('nextCursor');
-      expect(Array.isArray(response.body.data.data)).toBe(true);
+      expect(response.body).toHaveProperty('result');
+      expect(response.body.result).toHaveProperty('data');
+      expect(response.body.result).toHaveProperty('nextCursor');
+      expect(Array.isArray(response.body.result.data)).toBe(true);
     });
 
     it('should return player objects with required fields', async () => {
       const response = await request(app).get('/v1/players/all?limit=5');
 
       expect(response.status).toBe(200);
-      const players = response.body.data.data;
+      const players = response.body.result.data;
 
       players.forEach((player: any) => {
         expect(player).toHaveProperty('player_id');
@@ -37,7 +37,7 @@ describe('GET /v1/players/all (Integration)', () => {
       const response = await request(app).get('/v1/players/all');
 
       expect(response.status).toBe(200);
-      const players = response.body.data.data;
+      const players = response.body.result.data;
       expect(players.length).toBeLessThanOrEqual(10);
     });
 
@@ -46,7 +46,7 @@ describe('GET /v1/players/all (Integration)', () => {
       const response = await request(app).get(`/v1/players/all?limit=${limit}`);
 
       expect(response.status).toBe(200);
-      const players = response.body.data.data;
+      const players = response.body.result.data;
       expect(players.length).toBeLessThanOrEqual(limit);
     });
 
@@ -54,7 +54,7 @@ describe('GET /v1/players/all (Integration)', () => {
       const response = await request(app).get('/v1/players/all?limit=50');
 
       expect(response.status).toBe(200);
-      const players = response.body.data.data;
+      const players = response.body.result.data;
       expect(players.length).toBeLessThanOrEqual(20);
     });
 
@@ -62,7 +62,7 @@ describe('GET /v1/players/all (Integration)', () => {
       const response = await request(app).get('/v1/players/all?limit=20');
 
       expect(response.status).toBe(200);
-      const players = response.body.data.data;
+      const players = response.body.result.data;
 
       for (let i = 1; i < players.length; i++) {
         expect(players[i].player_id).toBeGreaterThanOrEqual(players[i - 1].player_id);
@@ -73,7 +73,7 @@ describe('GET /v1/players/all (Integration)', () => {
       const response = await request(app).get('/v1/players/all?limit=5');
 
       expect(response.status).toBe(200);
-      const { nextCursor, data } = response.body.data;
+      const { nextCursor, data } = response.body.result;
 
       if (data.length === 5) {
         expect(nextCursor).toBeDefined();
@@ -83,7 +83,7 @@ describe('GET /v1/players/all (Integration)', () => {
 
     it('should return null nextCursor when at end of results', async () => {
       const firstResponse = await request(app).get('/v1/players/all?limit=5');
-      const firstPlayers = firstResponse.body.data.data;
+      const firstPlayers = firstResponse.body.result.data;
 
       if (firstPlayers.length < 5) {
         expect(firstResponse.body.data.nextCursor).toBeNull();
@@ -94,12 +94,12 @@ describe('GET /v1/players/all (Integration)', () => {
   describe('Pagination', () => {
     it('should retrieve different players using nextCursor', async () => {
       const firstResponse = await request(app).get('/v1/players/all?limit=3');
-      const firstPlayers = firstResponse.body.data.data;
-      const nextCursor = firstResponse.body.data.nextCursor;
+      const firstPlayers = firstResponse.body.result.data;
+      const nextCursor = firstResponse.body.result.nextCursor;
 
       if (nextCursor) {
         const secondResponse = await request(app).get(`/v1/players/all?limit=3&nextCursor=${nextCursor}`);
-        const secondPlayers = secondResponse.body.data.data;
+        const secondPlayers = secondResponse.body.result.data;
 
         expect(secondResponse.status).toBe(200);
         expect(secondPlayers.length).toBeGreaterThan(0);
@@ -115,20 +115,20 @@ describe('GET /v1/players/all (Integration)', () => {
       const response = await request(app).get('/v1/players/all?limit=0');
 
       expect(response.status).toBe(200);
-      expect(response.body.data.data).toEqual([]);
-      expect(response.body.data.nextCursor).toBeNull();
+      expect(response.body.result.data).toEqual([]);
+      expect(response.body.result.nextCursor).toBeNull();
     });
 
     it('should handle cursor at specific player_id', async () => {
       const firstResponse = await request(app).get('/v1/players/all?limit=2');
-      const players = firstResponse.body.data.data;
+      const players = firstResponse.body.result.data;
 
       if (players.length === 2) {
         const cursorPlayerId = players[1].player_id;
         const paginatedResponse = await request(app).get(`/v1/players/all?limit=5&nextCursor=${cursorPlayerId}`);
 
         expect(paginatedResponse.status).toBe(200);
-        const paginatedPlayers = paginatedResponse.body.data.data;
+        const paginatedPlayers = paginatedResponse.body.result.data;
         expect(paginatedPlayers.length).toBeGreaterThan(0);
       }
     });
@@ -175,9 +175,9 @@ describe('GET /v1/players/all (Integration)', () => {
     it('should have properly structured data object', async () => {
       const response = await request(app).get('/v1/players/all?limit=1');
 
-      expect(response.body.data).toHaveProperty('data');
-      expect(response.body.data).toHaveProperty('nextCursor');
-      expect(Array.isArray(response.body.data.data)).toBe(true);
+      expect(response.body.result).toHaveProperty('data');
+      expect(response.body.result).toHaveProperty('nextCursor');
+      expect(Array.isArray(response.body.result.data)).toBe(true);
     });
   });
 });

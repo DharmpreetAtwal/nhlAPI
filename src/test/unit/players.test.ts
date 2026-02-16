@@ -2,6 +2,7 @@ import request from 'supertest';
 import { app } from '../../app';
 import { PlayerModel } from '../../models/player';
 import { mockPlayers } from '../mockPlayers';
+import { mock } from 'node:test';
 
 jest.mock('../../models/player');
 
@@ -22,11 +23,11 @@ describe('GET /v1/players/all', () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         success: true,
-        data: {
+        result: {
           data: mockPlayers,
           nextCursor: null,
-        },
-      });
+        }
+      })
       expect(PlayerModel.getAll).toHaveBeenCalledWith(10, undefined);
     });
 
@@ -259,7 +260,7 @@ describe('GET /v1/players/nations', () => {
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
         success: true,
-        data: {
+        result: {
           data: players,
           nextCursor: null,
         }
@@ -279,7 +280,7 @@ describe('GET /v1/players/nations', () => {
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
         success: true,
-        data: {
+        result: {
           data: players,
           nextCursor: null,
         },
@@ -298,7 +299,7 @@ describe('GET /v1/players/nations', () => {
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
         success: true,
-        data: {
+        result: {
           data: players,
           nextCursor: null
         }
@@ -317,7 +318,7 @@ describe('GET /v1/players/nations', () => {
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
         success: true,
-        data: {
+        result: {
           data: players,
           nextCursor: null
         }
@@ -336,7 +337,7 @@ describe('GET /v1/players/nations', () => {
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
         success: true,
-        data: {
+        result: {
           data: players,
           nextCursor: 3
         }
@@ -355,7 +356,7 @@ describe('GET /v1/players/nations', () => {
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
         success: true,
-        data: {
+        result: {
           data: players,
           nextCursor: null
         }
@@ -541,7 +542,7 @@ describe('GET /v1/players/all', () => {
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
         success: true,
-        data: {
+        result: {
           data: mockPlayers,
           nextCursor: null,
         },

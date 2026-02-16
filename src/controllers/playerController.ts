@@ -9,7 +9,7 @@ export class PlayerController {
             const limit = parseIntegerUndefinedParam(req.query.limit, "limit")
             const nextCursor = parseIntegerUndefinedParam(req.query.nextCursor, "nextCursor")
             const players = await PlayerService.getAllPlayers(limit, nextCursor)
-            return res.status(200).json({ success: true, data: players })
+            return res.status(200).json({ success: true, result: players })
         } catch(error) {
             next(error)
         }
@@ -27,7 +27,7 @@ export class PlayerController {
                 return res.status(404).json({ success: false, message: `The player with id='${id}' was not found.` })
             }
 
-            return res.status(200).json({ success: true, data: player })
+            return res.status(200).json({ success: true, result: player })
         } catch(error) {
             next(error)
         }
@@ -40,7 +40,7 @@ export class PlayerController {
             const nation = parseCountryCode(req.params.nation, "nation")
 
             const players = await PlayerService.getPlayersByNationality(nation, limit, nextCursor)
-            return res.status(200).json({ success: true, data: players })
+            return res.status(200).json({ success: true, result: players })
         } catch(error) {
             next(error)
         }
