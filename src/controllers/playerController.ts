@@ -22,7 +22,7 @@ export class PlayerController {
                 return res.status(400).json({ success: false, message: `The parameter id must be defined.` })
             }
 
-            const player = PlayerService.getPlayerById(id)
+            const player = await PlayerService.getPlayerById(id)
             if(!player) {
                 return res.status(404).json({ success: false, message: `The player with id='${id}' was not found.` })
             }

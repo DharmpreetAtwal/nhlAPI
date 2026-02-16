@@ -82,11 +82,11 @@ describe('GET /v1/players/all (Integration)', () => {
     });
 
     it('should return null nextCursor when at end of results', async () => {
-      const firstResponse = await request(app).get('/v1/players/all?limit=5');
+      const firstResponse = await request(app).get('/v1/players/all?limit=5&nextCursor=8481812');
       const firstPlayers = firstResponse.body.result.data;
 
       if (firstPlayers.length < 5) {
-        expect(firstResponse.body.data.nextCursor).toBeNull();
+        expect(firstResponse.body.result.nextCursor).toBeNull()
       }
     });
   });
@@ -178,6 +178,168 @@ describe('GET /v1/players/all (Integration)', () => {
       expect(response.body.result).toHaveProperty('data');
       expect(response.body.result).toHaveProperty('nextCursor');
       expect(Array.isArray(response.body.result.data)).toBe(true);
+    });
+  });
+});
+
+describe('GET /v1/players/:id (Integration)', () => {
+  describe('Data Correctness', () => {
+    it('should return player from database with correct structure', async () => {
+      const response = await request(app).get('/v1/players/8444894');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('result');
+
+      const result = response.body.result
+      expect(result).toHaveProperty('player_id');
+      expect(result).toHaveProperty('first_name');
+      expect(result).toHaveProperty('last_name');
+      expect(result).toHaveProperty('nationality');
+      expect(result).toHaveProperty('primary_position');
+      expect(typeof result.player_id).toBe('number');
+      expect(typeof result.first_name).toBe('string');
+      expect(typeof result.last_name).toBe('string');
+      expect(typeof result.nationality).toBe('string');
+    });
+
+    it('should return correct player ID in response', async () => {
+      const playerId = 8444894;
+      const response = await request(app).get(`/v1/players/${playerId}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.result.player_id).toBe(playerId);
+    });
+
+    it('should return player with all required fields populated', async () => {
+      const response = await request(app).get('/v1/players/8444894');
+
+      expect(response.status).toBe(200);
+      const player = response.body.result;
+
+      expect(player.player_id).toBeDefined();
+      expect(player.player_id).not.toBeNull();
+      expect(player.first_name).toBeDefined();
+      expect(player.first_name).not.toBeNull();
+      expect(player.last_name).toBeDefined();
+      expect(player.last_name).not.toBeNull();
+      expect(player.nationality).toBeDefined();
+      expect(player.primary_position).toBeDefined();
+    });
+
+    it('should return different players for different IDs', async () => {
+      const response1 = await request(app).get('/v1/players/8444894');
+      const response2 = await request(app).get('/v1/players/8469608');
+
+      expect(response1.status).toBe(200);
+      expect(response2.status).toBe(200);
+
+      const player1 = response1.body.result;
+      const player2 = response2.body.result;
+
+      expect(player1.player_id).not.toBe(player2.player_id);
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should return 404 for non-existent player ID', async () => {
+      const response = await request(app).get('/v1/players/999999');
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 400 for non-numeric ID', async () => {
+      const response = await request(app).get('/v1/players/abc');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 400 for negative ID', async () => {
+      const response = await request(app).get('/v1/players/-1');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 400 for decimal ID', async () => {
+      const response = await request(app).get('/v1/players/8444894.5');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 400 for ID with special characters', async () => {
+      const response = await request(app).get('/v1/players/8444@94');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('Response Format', () => {
+    it('should always return success field', async () => {
+      const response = await request(app).get('/v1/players/8444894');
+
+      expect(response.body).toHaveProperty('success');
+      expect(typeof response.body.success).toBe('boolean');
+    });
+
+    it('should return result object not wrapped in array', async () => {
+      const response = await request(app).get('/v1/players/8444894');
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body.result)).toBe(false);
+      expect(typeof response.body.result).toBe('object');
+    });
+
+    it('should return player object directly in result', async () => {
+      const response = await request(app).get('/v1/players/8444894');
+
+      expect(response.status).toBe(200);
+      const result = response.body.result;
+
+      expect(result).toHaveProperty('player_id');
+      expect(result).not.toHaveProperty('data');
+      expect(result).not.toHaveProperty('nextCursor');
+    });
+  });
+
+  describe('Data Types and Validation', () => {
+    it('should return player_id as number', async () => {
+      const response = await request(app).get('/v1/players/8444894');
+
+      expect(response.status).toBe(200);
+      expect(typeof response.body.result.player_id).toBe('number');
+    });
+
+    it('should return first_name and last_name as strings', async () => {
+      const response = await request(app).get('/v1/players/8444894');
+
+      expect(response.status).toBe(200);
+      const player = response.body.result;
+
+      expect(typeof player.first_name).toBe('string');
+      expect(typeof player.last_name).toBe('string');
+      expect(player.first_name.length).toBeGreaterThan(0);
+      expect(player.last_name.length).toBeGreaterThan(0);
+    });
+
+    it('should return nationality as string', async () => {
+      const response = await request(app).get('/v1/players/8444894');
+
+      expect(response.status).toBe(200);
+      expect(typeof response.body.result.nationality).toBe('string');
+      expect(response.body.result.nationality.length).toBeGreaterThan(0);
+    });
+
+    it('should return primary_position as string', async () => {
+      const response = await request(app).get('/v1/players/8444894');
+
+      expect(response.status).toBe(200);
+      expect(typeof response.body.result.primary_position).toBe('string');
+      expect(response.body.result.primary_position.length).toBeGreaterThan(0);
     });
   });
 });
