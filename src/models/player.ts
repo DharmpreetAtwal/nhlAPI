@@ -27,7 +27,7 @@ export class PlayerModel {
 
         return {
             data: players,
-            nextCursor: players.length == limit ? players[players.length - 1].player_id : null
+            nextCursor: players.length === limit && players.length > 0 ? players[players.length - 1].player_id : null
         }
     }
 
@@ -51,7 +51,7 @@ export class PlayerModel {
 
         return {
             data: players,
-            nextCursor: players.length == limit ? players[players.length - 1].player_id : null
+            nextCursor: players.length === limit && players.length > 0 ? players[players.length - 1].player_id : null
         }
     }
 }

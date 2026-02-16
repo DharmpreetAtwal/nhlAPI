@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { app } from '../../app';
 import { PlayerModel } from '../../models/player';
-import { mockPlayers } from './mockPlayers';
+import { mockPlayers } from '../mockPlayers';
 
 jest.mock('../../models/player');
 
