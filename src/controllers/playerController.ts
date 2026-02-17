@@ -1,7 +1,7 @@
 import "../types/pagination";
 import { PlayerService } from "../services/playerService";
 import { NextFunction, Request, Response } from "express";
-import { parseIntegerUndefinedParam } from "../utilities/parseNumericUndefinedParam";
+import { parseIntegerUndefinedParam } from "../utilities/parseIntegerUndefinedParam";
 import { parseCountryCode } from "../utilities/parseCountryCode";
 
 export class PlayerController {

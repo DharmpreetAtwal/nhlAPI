@@ -2,7 +2,7 @@ declare global {
   namespace Express {
     interface Request {
       pagination: {
-        limit?: number;
+        limit: number;
         nextCursor?: number;
       };
     }
