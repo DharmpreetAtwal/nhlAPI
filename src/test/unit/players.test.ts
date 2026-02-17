@@ -2,7 +2,6 @@ import request from 'supertest';
 import { app } from '../../app';
 import { PlayerModel } from '../../models/player';
 import { mockPlayers } from '../mockPlayers';
-import { mock } from 'node:test';
 
 jest.mock('../../models/player');
 
@@ -70,32 +69,6 @@ describe('GET /v1/players/all', () => {
       expect(response.body.success).toBe(true);
       expect(PlayerModel.getAll).toHaveBeenCalledWith(10, 2);
     });
-
-    it('should accept valid zero value for limit', async () => {
-      (PlayerModel.getAll as jest.Mock).mockResolvedValue({
-        data: [],
-        nextCursor: null,
-      });
-
-      const response = await request(app).get('/v1/players/all?limit=0');
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(PlayerModel.getAll).toHaveBeenCalledWith(0, undefined);
-    });
-
-    it('should accept valid zero value for nextCursor', async () => {
-      (PlayerModel.getAll as jest.Mock).mockResolvedValue({
-        data: mockPlayers,
-        nextCursor: null,
-      });
-
-      const response = await request(app).get('/v1/players/all?nextCursor=0');
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(PlayerModel.getAll).toHaveBeenCalledWith(10, 0);
-    });
   });
 
   describe('Invalid limit parameter', () => {
@@ -149,6 +122,19 @@ describe('GET /v1/players/all', () => {
 
     it('should return 400 when limit has special characters', async () => {
       const response = await request(app).get('/v1/players/all?limit=12@34');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('positive integer');
+    });
+
+    it('should return 400 when limit is 0', async () => {
+      (PlayerModel.getAll as jest.Mock).mockResolvedValue({
+        data: [],
+        nextCursor: null,
+      });
+
+      const response = await request(app).get('/v1/players/all?limit=0');
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -209,6 +195,19 @@ describe('GET /v1/players/all', () => {
       const response = await request(app)
         .get('/v1/players/all')
         .query({ nextCursor: '123#456' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('positive integer');
+    });
+
+    it('should return 400 when nextCursor is 0', async () => {
+      (PlayerModel.getAll as jest.Mock).mockResolvedValue({
+        data: mockPlayers,
+        nextCursor: null,
+      });
+
+      const response = await request(app).get('/v1/players/all?nextCursor=0');
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -344,26 +343,6 @@ describe('GET /v1/players/nations', () => {
       })
       expect(PlayerModel.getByNationality).toHaveBeenCalledWith("CAN", 10, 2)
     })
-
-    it('should accept valid zero value for nextCursor', async () => {
-      const players = mockPlayers.filter((player) => player.nationality === "USA");
-      (PlayerModel.getByNationality as jest.Mock).mockResolvedValue({
-        data: players,
-        nextCursor: null
-      })
-
-      const response = await request(app).get("/v1/players/nations/USA?nextCursor=0")
-      expect(response.status).toBe(200)
-      expect(response.body).toEqual({
-        success: true,
-        result: {
-          data: players,
-          nextCursor: null
-        }
-      })
-      expect(PlayerModel.getByNationality).toHaveBeenCalledWith("USA", 10, 0)
-    })
-
   })
 
   describe('Invalid nation parameter', () => {
@@ -493,6 +472,19 @@ describe('GET /v1/players/nations', () => {
       expect(response.body.success).toBe(false)
       expect(response.body.message).toContain('positive integer')
     })
+
+    it('should return 400 when nextCursor is 0', async () => {
+      const players = mockPlayers.filter((player) => player.nationality === "USA");
+      (PlayerModel.getByNationality as jest.Mock).mockResolvedValue({
+        data: players,
+        nextCursor: null
+      })
+
+      const response = await request(app).get("/v1/players/nations/USA?nextCursor=0")
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toContain('positive integer')
+    })
   })
 
   describe('Invalid combinations', () => {
@@ -589,31 +581,6 @@ describe('GET /v1/players/all', () => {
       expect(PlayerModel.getAll).toHaveBeenCalledWith(10, 2)
     })
 
-    it('should accept valid zero value for limit', async () => {
-      (PlayerModel.getAll as jest.Mock).mockResolvedValue({
-        data: [],
-        nextCursor: null,
-      })
-
-      const response = await request(app).get('/v1/players/all?limit=0')
-
-      expect(response.status).toBe(200)
-      expect(response.body.success).toBe(true)
-      expect(PlayerModel.getAll).toHaveBeenCalledWith(0, undefined)
-    })
-
-    it('should accept valid zero value for nextCursor', async () => {
-      (PlayerModel.getAll as jest.Mock).mockResolvedValue({
-        data: mockPlayers,
-        nextCursor: null,
-      })
-
-      const response = await request(app).get('/v1/players/all?nextCursor=0')
-
-      expect(response.status).toBe(200)
-      expect(response.body.success).toBe(true)
-      expect(PlayerModel.getAll).toHaveBeenCalledWith(10, 0)
-    })
   })
 
   describe('Invalid limit parameter', () => {
@@ -664,6 +631,19 @@ describe('GET /v1/players/all', () => {
       expect(response.body.success).toBe(false)
       expect(response.body.message).toContain('positive integer')
     })
+
+    it('should return 400 when limit is 0', async () => {
+      (PlayerModel.getAll as jest.Mock).mockResolvedValue({
+        data: [],
+        nextCursor: null,
+      })
+
+      const response = await request(app).get('/v1/players/all?limit=0')
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toContain('positive integer')      
+    })
   })
 
   describe('Invalid nextCursor parameter', () => {
@@ -709,6 +689,19 @@ describe('GET /v1/players/all', () => {
 
     it('should return 400 when nextCursor has special characters', async () => {
       const response = await request(app).get('/v1/players/all?nextCursor=123%23456')
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toContain('positive integer')
+    })
+
+    it('should return 400 when nextCursor is 0', async () => {
+      (PlayerModel.getAll as jest.Mock).mockResolvedValue({
+        data: mockPlayers,
+        nextCursor: null,
+      })
+
+      const response = await request(app).get('/v1/players/all?nextCursor=0')
 
       expect(response.status).toBe(400)
       expect(response.body.success).toBe(false)

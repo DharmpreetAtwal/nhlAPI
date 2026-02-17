@@ -111,14 +111,6 @@ describe('GET /v1/players/all (Integration)', () => {
       }
     });
 
-    it('should handle zero limit correctly', async () => {
-      const response = await request(app).get('/v1/players/all?limit=0');
-
-      expect(response.status).toBe(200);
-      expect(response.body.result.data).toEqual([]);
-      expect(response.body.result.nextCursor).toBeNull();
-    });
-
     it('should handle cursor at specific player_id', async () => {
       const firstResponse = await request(app).get('/v1/players/all?limit=2');
       const players = firstResponse.body.result.data;
@@ -161,6 +153,14 @@ describe('GET /v1/players/all (Integration)', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
+    });
+
+    it('should reject zero limit', async () => {
+      const response = await request(app).get('/v1/players/all?limit=0');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('positive integer');
     });
   });
 
@@ -465,14 +465,6 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
       }
     });
 
-    it('should handle zero limit correctly', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=0');
-
-      expect(response.status).toBe(200);
-      expect(response.body.result.data).toEqual([]);
-      expect(response.body.result.nextCursor).toBeNull();
-    });
-
     it('should handle cursor at specific player_id', async () => {
       const firstResponse = await request(app).get('/v1/players/nations/CAN?limit=2');
       const players = firstResponse.body.result.data;
@@ -515,6 +507,14 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
+    });
+
+    it('should reject zero limit', async () => {
+      const response = await request(app).get('/v1/players/nations/CAN?limit=0');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('positive integer');
     });
   });
 
