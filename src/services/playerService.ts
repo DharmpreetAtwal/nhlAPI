@@ -1,3 +1,4 @@
+import { NotFoundError } from "../errors/httpClientErrors";
 import { PlayerModel } from "../models/player";
 
 export class PlayerService {
@@ -6,7 +7,11 @@ export class PlayerService {
     }
 
     static getPlayerById = async (id: number) => {
-        return await PlayerModel.getByID(id)
+        const player = await PlayerModel.getByID(id)
+        if(!player) { 
+            throw new NotFoundError(`The player with id='${id}' was not found.`)
+        }
+        return player
     }
 
     static getPlayersByNationality = async (nation: string, limit: number, nextCursor?: number) => {
