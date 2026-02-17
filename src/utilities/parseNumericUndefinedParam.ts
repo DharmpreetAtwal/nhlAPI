@@ -7,7 +7,7 @@ export function parseIntegerUndefinedParam(value: string | QueryString.ParsedQs 
     }
 
     if (typeof value !== "string") {
-        throw new IntegerParseError(`The ${paramName} parameter must be a string.`)
+        throw new IntegerParseError(`The ${paramName} parameter must be passed as a string.`)
     }
 
     if(value.trim() === "") {
@@ -16,7 +16,7 @@ export function parseIntegerUndefinedParam(value: string | QueryString.ParsedQs 
 
     let num = Number(value)
     if(num < 0 || !Number.isInteger(num)) {
-        throw new IntegerParseError(`The ${paramName}='${value}' parameter must be a positive integer.`)
+        throw new IntegerParseError(`The ${paramName}='${value}' parameter must evaluate to a positive integer.`)
     }
 
     return num

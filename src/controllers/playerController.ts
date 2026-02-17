@@ -1,3 +1,4 @@
+import "../types/pagination";
 import { PlayerService } from "../services/playerService";
 import { NextFunction, Request, Response } from "express";
 import { parseIntegerUndefinedParam } from "../utilities/parseNumericUndefinedParam";
@@ -6,8 +7,7 @@ import { parseCountryCode } from "../utilities/parseCountryCode";
 export class PlayerController {
     static getAllPlayers = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const limit = parseIntegerUndefinedParam(req.query.limit, "limit")
-            const nextCursor = parseIntegerUndefinedParam(req.query.nextCursor, "nextCursor")
+            const { limit, nextCursor } = req.pagination
             const players = await PlayerService.getAllPlayers(limit, nextCursor)
             return res.status(200).json({ success: true, result: players })
         } catch(error) {
@@ -35,8 +35,7 @@ export class PlayerController {
 
     static getPlayersByNationality = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const limit = parseIntegerUndefinedParam(req.query.limit, "limit")
-            const nextCursor = parseIntegerUndefinedParam(req.query.nextCursor, "nextCursor")
+            const { limit, nextCursor } = req.pagination
             const nation = parseCountryCode(req.params.nation, "nation")
 
             const players = await PlayerService.getPlayersByNationality(nation, limit, nextCursor)
