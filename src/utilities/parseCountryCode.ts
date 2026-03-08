@@ -1,8 +1,7 @@
-import * as QueryString from "qs"
 import { CountryCodeParseError } from "../errors/countryCodeParseError"
 
 export function parseCountryCode(
-    value: string | QueryString.ParsedQs | (string | QueryString.ParsedQs)[] | undefined, 
+    value: unknown, 
     paramName: string): string {
         
     if(value === undefined) {

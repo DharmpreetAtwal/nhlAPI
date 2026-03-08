@@ -1,7 +1,6 @@
 import { IntegerParseError } from "../errors/numericParseError"
-import * as QueryString from "qs"
 
-export function parseIntegerParam(value: string | QueryString.ParsedQs | (string | QueryString.ParsedQs)[] | undefined, paramName: string): number {
+export function parseIntegerParam(value: unknown, paramName: string): number {
     if(value === undefined) {
         throw new IntegerParseError(`The ${paramName} parameter must be defined`)
     }

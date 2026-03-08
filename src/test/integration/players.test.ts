@@ -436,7 +436,7 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return null nextCursor when at end of results', async () => {
-      const firstResponse = await request(app).get('/v1/players/nations/CHE?limit=5&nextCursor=8481812');
+      const firstResponse = await request(app).get('/v1/players/nations/CHE?limit=5&nextCursor=8480213');
       const firstPlayers = firstResponse.body.result.data;
 
       if (firstPlayers.length < 5) {
@@ -544,6 +544,13 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
       const response = await request(app).get('/v1/players/nations/CA1');
 
       expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should reject non-existent nation codes', async () => {
+      const response = await request(app).get('/v1/players/nations/ABC');
+
+      expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
     });
 

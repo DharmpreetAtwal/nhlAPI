@@ -1,16 +1,17 @@
 import "../types/pagination";
 import { PlayerService } from "../services/playerService";
 import { NextFunction, Request, Response } from "express";
-import { parseIntegerUndefinedParam } from "../utilities/parseIntegerUndefinedParam";
-import { parseCountryCode } from "../utilities/parseCountryCode";
-import { parseIntegerParam } from "../utilities/parseIntegerParam";
+
+const sendSuccess = (res: Response, data: any, statusCode = 200) => {
+    return res.status(statusCode).json({ success: true, result: data })
+}
 
 export class PlayerController {
     static getAllPlayers = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { limit, nextCursor } = req.pagination
             const players = await PlayerService.getAllPlayers(limit, nextCursor)
-            return res.status(200).json({ success: true, result: players })
+            return sendSuccess(res, players)
         } catch(error) {
             next(error)
         }
@@ -18,9 +19,9 @@ export class PlayerController {
 
     static getPlayerById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const id = parseIntegerParam(req.params.id, "id")
+            const id = req.params.id
             const player = await PlayerService.getPlayerById(id)
-            return res.status(200).json({ success: true, result: player })
+            return sendSuccess(res, player)
         } catch(error) {
             next(error)
         }
@@ -29,9 +30,9 @@ export class PlayerController {
     static getPlayersByNationality = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { limit, nextCursor } = req.pagination
-            const nation = parseCountryCode(req.params.nation, "nation")
+            const nation = req.params.nation
             const players = await PlayerService.getPlayersByNationality(nation, limit, nextCursor)
-            return res.status(200).json({ success: true, result: players })
+            return sendSuccess(res, players)
         } catch(error) {
             next(error)
         }
