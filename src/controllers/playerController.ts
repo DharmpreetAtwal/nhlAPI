@@ -1,37 +1,39 @@
 import "../types/pagination";
-import { PlayerService } from "../services/playerService";
 import { NextFunction, Request, Response } from "express";
-
-const sendSuccess = (res: Response, data: any, statusCode = 200) => {
-    return res.status(statusCode).json({ success: true, result: data })
-}
+import { IPlayerService } from "../interfaces/iPlayerService";
+import { sendSuccess } from "../utilities/sendSucess";
 
 export class PlayerController {
-    static getAllPlayers = async (req: Request, res: Response, next: NextFunction) => {
+    private readonly playerService: IPlayerService;
+    constructor(playerService: IPlayerService) {
+        this.playerService = playerService
+    }
+
+    getAllPlayers = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { limit, nextCursor } = req.pagination
-            const players = await PlayerService.getAllPlayers(limit, nextCursor)
+            const players = await this.playerService.getAllPlayers(limit, nextCursor)
             return sendSuccess(res, players)
         } catch(error) {
             next(error)
         }
     }
 
-    static getPlayerById = async (req: Request, res: Response, next: NextFunction) => {
+    getPlayerById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const id = req.params.id
-            const player = await PlayerService.getPlayerById(id)
+            const player = await this.playerService.getPlayerById(id)
             return sendSuccess(res, player)
         } catch(error) {
             next(error)
         }
     }
 
-    static getPlayersByNationality = async (req: Request, res: Response, next: NextFunction) => {
+    getPlayersByNationality = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { limit, nextCursor } = req.pagination
             const nation = req.params.nation
-            const players = await PlayerService.getPlayersByNationality(nation, limit, nextCursor)
+            const players = await this.playerService.getPlayersByNationality(nation, limit, nextCursor)
             return sendSuccess(res, players)
         } catch(error) {
             next(error)
