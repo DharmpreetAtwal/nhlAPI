@@ -237,3 +237,22 @@ model team_info {
   game_skater_stats                                game_skater_stats[]
   game_team_stats                                  game_team_stats[]
 }
+
+model user {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  username  String?   @unique
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  sessions  session[]
+}
+
+model session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -1,5 +1,6 @@
 import express from "express"
 import { PlayerRouterV1 } from "./routes/playerRoutesV1"
+import { AuthRouterV1 } from "./routes/authRoutesV1"
 import { requestLogger } from "./middleware/requestLogger"
 import { errorHandler } from "./middleware/errorHandler"
 
@@ -9,6 +10,7 @@ app.use(express.json())
 
 app.use(requestLogger)
 
+app.use("/v1/auth", AuthRouterV1)
 app.use("/v1/players", PlayerRouterV1)
 
 app.use(errorHandler)
