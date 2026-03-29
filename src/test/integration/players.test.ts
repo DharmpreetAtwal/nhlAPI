@@ -1,10 +1,28 @@
 import request from 'supertest';
 import { app } from '../../app';
+import { cleanupTestSession, createTestSession } from '../helpers/auth';
+import { prisma } from '../../config/prisma';
 
 describe('GET /v1/players/all (Integration)', () => {
+  let token: string
+  let userId: string
+
+  beforeAll(async () => {
+    const session = await createTestSession()
+    token = session.token
+    userId = session.user.id
+  })
+
+  afterAll(async () => {
+    await cleanupTestSession(userId)
+    await prisma.$disconnect()
+  })
+
   describe('Data correctness', () => {
     it('should return players from database with correct structure', async () => {
-      const response = await request(app).get('/v1/players/all');
+      const response = await request(app)
+        .get('/v1/players/all')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
@@ -15,7 +33,9 @@ describe('GET /v1/players/all (Integration)', () => {
     });
 
     it('should return player objects with required fields', async () => {
-      const response = await request(app).get('/v1/players/all?limit=5');
+      const response = await request(app)
+        .get('/v1/players/all?limit=5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -34,7 +54,9 @@ describe('GET /v1/players/all (Integration)', () => {
     });
 
     it('should return default limit of 10 when no limit specified', async () => {
-      const response = await request(app).get('/v1/players/all');
+      const response = await request(app)
+        .get('/v1/players/all')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -43,7 +65,9 @@ describe('GET /v1/players/all (Integration)', () => {
 
     it('should respect custom limit parameter', async () => {
       const limit = 5;
-      const response = await request(app).get(`/v1/players/all?limit=${limit}`);
+      const response = await request(app)
+        .get(`/v1/players/all?limit=${limit}`)
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -51,7 +75,9 @@ describe('GET /v1/players/all (Integration)', () => {
     });
 
     it('should cap limit to 20 when requesting more than 20', async () => {
-      const response = await request(app).get('/v1/players/all?limit=50');
+      const response = await request(app)
+        .get('/v1/players/all?limit=50')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -59,7 +85,9 @@ describe('GET /v1/players/all (Integration)', () => {
     });
 
     it('should return players in ascending order by player_id', async () => {
-      const response = await request(app).get('/v1/players/all?limit=20');
+      const response = await request(app)
+        .get('/v1/players/all?limit=20')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -70,7 +98,9 @@ describe('GET /v1/players/all (Integration)', () => {
     });
 
     it('should provide nextCursor when more players exist', async () => {
-      const response = await request(app).get('/v1/players/all?limit=5');
+      const response = await request(app)
+        .get('/v1/players/all?limit=5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const { nextCursor, data } = response.body.result;
@@ -82,7 +112,9 @@ describe('GET /v1/players/all (Integration)', () => {
     });
 
     it('should return null nextCursor when at end of results', async () => {
-      const firstResponse = await request(app).get('/v1/players/all?limit=5&nextCursor=8481812');
+      const firstResponse = await request(app)
+        .get('/v1/players/all?limit=5&nextCursor=8481812')
+        .set('Authorization', `Bearer ${token}`);
       const firstPlayers = firstResponse.body.result.data;
 
       if (firstPlayers.length < 5) {
@@ -93,12 +125,16 @@ describe('GET /v1/players/all (Integration)', () => {
 
   describe('Pagination', () => {
     it('should retrieve different players using nextCursor', async () => {
-      const firstResponse = await request(app).get('/v1/players/all?limit=3');
+      const firstResponse = await request(app)
+        .get('/v1/players/all?limit=3')
+        .set('Authorization', `Bearer ${token}`);
       const firstPlayers = firstResponse.body.result.data;
       const nextCursor = firstResponse.body.result.nextCursor;
 
       if (nextCursor) {
-        const secondResponse = await request(app).get(`/v1/players/all?limit=3&nextCursor=${nextCursor}`);
+        const secondResponse = await request(app)
+          .get(`/v1/players/all?limit=3&nextCursor=${nextCursor}`)
+          .set('Authorization', `Bearer ${token}`);
         const secondPlayers = secondResponse.body.result.data;
 
         expect(secondResponse.status).toBe(200);
@@ -112,12 +148,16 @@ describe('GET /v1/players/all (Integration)', () => {
     });
 
     it('should handle cursor at specific player_id', async () => {
-      const firstResponse = await request(app).get('/v1/players/all?limit=2');
+      const firstResponse = await request(app)
+        .get('/v1/players/all?limit=2')
+        .set('Authorization', `Bearer ${token}`);
       const players = firstResponse.body.result.data;
 
       if (players.length === 2) {
         const cursorPlayerId = players[1].player_id;
-        const paginatedResponse = await request(app).get(`/v1/players/all?limit=5&nextCursor=${cursorPlayerId}`);
+        const paginatedResponse = await request(app)
+          .get(`/v1/players/all?limit=5&nextCursor=${cursorPlayerId}`)
+          .set('Authorization', `Bearer ${token}`);
 
         expect(paginatedResponse.status).toBe(200);
         const paginatedPlayers = paginatedResponse.body.result.data;
@@ -128,35 +168,45 @@ describe('GET /v1/players/all (Integration)', () => {
 
   describe('Query parameter validation', () => {
     it('should reject negative limit', async () => {
-      const response = await request(app).get('/v1/players/all?limit=-5');
+      const response = await request(app)
+        .get('/v1/players/all?limit=-5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject negative nextCursor', async () => {
-      const response = await request(app).get('/v1/players/all?nextCursor=-10');
+      const response = await request(app)
+        .get('/v1/players/all?nextCursor=-10')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject non-integer limit', async () => {
-      const response = await request(app).get('/v1/players/all?limit=5.5');
+      const response = await request(app)
+        .get('/v1/players/all?limit=5.5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject non-numeric limit', async () => {
-      const response = await request(app).get('/v1/players/all?limit=abc');
+      const response = await request(app)
+        .get('/v1/players/all?limit=abc')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject zero limit', async () => {
-      const response = await request(app).get('/v1/players/all?limit=0');
+      const response = await request(app)
+        .get('/v1/players/all?limit=0')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -166,14 +216,18 @@ describe('GET /v1/players/all (Integration)', () => {
 
   describe('Response format', () => {
     it('should always include success field as true for valid requests', async () => {
-      const response = await request(app).get('/v1/players/all');
+      const response = await request(app)
+        .get('/v1/players/all')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.body).toHaveProperty('success');
       expect(response.body.success).toBe(true);
     });
 
     it('should have properly structured data object', async () => {
-      const response = await request(app).get('/v1/players/all?limit=1');
+      const response = await request(app)
+        .get('/v1/players/all?limit=1')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.body.result).toHaveProperty('data');
       expect(response.body.result).toHaveProperty('nextCursor');
@@ -183,9 +237,25 @@ describe('GET /v1/players/all (Integration)', () => {
 });
 
 describe('GET /v1/players/:id (Integration)', () => {
+  let token: string
+  let userId: string
+
+  beforeAll(async () => {
+    const session = await createTestSession()
+    token = session.token
+    userId = session.user.id
+  })
+
+  afterAll(async () => {
+    await cleanupTestSession(userId)
+    await prisma.$disconnect()
+  })
+
   describe('Data Correctness', () => {
     it('should return player from database with correct structure', async () => {
-      const response = await request(app).get('/v1/players/8444894');
+      const response = await request(app)
+        .get('/v1/players/8444894')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
@@ -205,14 +275,18 @@ describe('GET /v1/players/:id (Integration)', () => {
 
     it('should return correct player ID in response', async () => {
       const playerId = 8444894;
-      const response = await request(app).get(`/v1/players/${playerId}`);
+      const response = await request(app)
+        .get(`/v1/players/${playerId}`)
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body.result.player_id).toBe(playerId);
     });
 
     it('should return player with all required fields populated', async () => {
-      const response = await request(app).get('/v1/players/8444894');
+      const response = await request(app)
+        .get('/v1/players/8444894')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const player = response.body.result;
@@ -228,8 +302,12 @@ describe('GET /v1/players/:id (Integration)', () => {
     });
 
     it('should return different players for different IDs', async () => {
-      const response1 = await request(app).get('/v1/players/8444894');
-      const response2 = await request(app).get('/v1/players/8469608');
+      const response1 = await request(app)
+        .get('/v1/players/8444894')
+        .set('Authorization', `Bearer ${token}`);
+      const response2 = await request(app)
+        .get('/v1/players/8469608')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
@@ -243,35 +321,43 @@ describe('GET /v1/players/:id (Integration)', () => {
 
   describe('Error Handling', () => {
     it('should return 404 for non-existent player ID', async () => {
-      const response = await request(app).get('/v1/players/999999');
+      const response = await request(app)
+        .get('/v1/players/999999')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
     });
 
     it('should return 400 for non-numeric ID', async () => {
-      const response = await request(app).get('/v1/players/abc');
+      const response = await request(app)
+        .get('/v1/players/abc')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should return 400 for negative ID', async () => {
-      const response = await request(app).get('/v1/players/-1');
+      const response = await request(app).get('/v1/players/-1').set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should return 400 for decimal ID', async () => {
-      const response = await request(app).get('/v1/players/8444894.5');
+      const response = await request(app)
+        .get('/v1/players/8444894.5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should return 400 for ID with special characters', async () => {
-      const response = await request(app).get('/v1/players/8444@94');
+      const response = await request(app)
+        .get('/v1/players/8444@94')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -280,14 +366,18 @@ describe('GET /v1/players/:id (Integration)', () => {
 
   describe('Response Format', () => {
     it('should always return success field', async () => {
-      const response = await request(app).get('/v1/players/8444894');
+      const response = await request(app)
+        .get('/v1/players/8444894')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.body).toHaveProperty('success');
       expect(typeof response.body.success).toBe('boolean');
     });
 
     it('should return result object not wrapped in array', async () => {
-      const response = await request(app).get('/v1/players/8444894');
+      const response = await request(app)
+        .get('/v1/players/8444894')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body.result)).toBe(false);
@@ -295,7 +385,9 @@ describe('GET /v1/players/:id (Integration)', () => {
     });
 
     it('should return player object directly in result', async () => {
-      const response = await request(app).get('/v1/players/8444894');
+      const response = await request(app)
+        .get('/v1/players/8444894')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const result = response.body.result;
@@ -308,14 +400,18 @@ describe('GET /v1/players/:id (Integration)', () => {
 
   describe('Data Types and Validation', () => {
     it('should return player_id as number', async () => {
-      const response = await request(app).get('/v1/players/8444894');
+      const response = await request(app)
+        .get('/v1/players/8444894')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(typeof response.body.result.player_id).toBe('number');
     });
 
     it('should return first_name and last_name as strings', async () => {
-      const response = await request(app).get('/v1/players/8444894');
+      const response = await request(app)
+        .get('/v1/players/8444894')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const player = response.body.result;
@@ -327,7 +423,7 @@ describe('GET /v1/players/:id (Integration)', () => {
     });
 
     it('should return nationality as string', async () => {
-      const response = await request(app).get('/v1/players/8444894');
+      const response = await request(app).get('/v1/players/8444894').set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(typeof response.body.result.nationality).toBe('string');
@@ -335,7 +431,9 @@ describe('GET /v1/players/:id (Integration)', () => {
     });
 
     it('should return primary_position as string', async () => {
-      const response = await request(app).get('/v1/players/8444894');
+      const response = await request(app)
+        .get('/v1/players/8444894')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(typeof response.body.result.primary_position).toBe('string');
@@ -345,9 +443,25 @@ describe('GET /v1/players/:id (Integration)', () => {
 });
 
 describe('GET /v1/players/nations/:nation (Integration)', () => {
+  let token: string
+  let userId: string
+
+  beforeAll(async () => {
+    const session = await createTestSession()
+    token = session.token
+    userId = session.user.id
+  })
+
+  afterAll(async () => {
+    await cleanupTestSession(userId)
+    await prisma.$disconnect()
+  })
+
   describe('Data Correctness', () => {
     it('should return players from the database with the correct structure', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
@@ -358,7 +472,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return player objects with required fields', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=5');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -377,7 +493,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return players with the requested nationality', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=5');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -388,7 +506,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return default limit of 10 when no limit specified', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -397,7 +517,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
 
     it('should respect custom limit parameter', async () => {
       const limit = 5;
-      const response = await request(app).get(`/v1/players/nations/CAN?limit=${limit}`);
+      const response = await request(app)
+        .get(`/v1/players/nations/CAN?limit=${limit}`)
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -405,7 +527,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should cap limit to 20 when requesting more than 20', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=50');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=50')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -413,7 +537,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return players in ascending order by player_id', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=20');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=20')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const players = response.body.result.data;
@@ -424,7 +550,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should provide nextCursor when more players exist', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=5');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       const { nextCursor, data } = response.body.result;
@@ -436,7 +564,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return null nextCursor when at end of results', async () => {
-      const firstResponse = await request(app).get('/v1/players/nations/CHE?limit=5&nextCursor=8480213');
+      const firstResponse = await request(app)
+        .get('/v1/players/nations/CHE?limit=5&nextCursor=8480213')
+        .set('Authorization', `Bearer ${token}`);
       const firstPlayers = firstResponse.body.result.data;
 
       if (firstPlayers.length < 5) {
@@ -447,12 +577,16 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
 
   describe('Pagination', () => {
     it('should retrieve different players using nextCursor', async () => {
-      const firstResponse = await request(app).get('/v1/players/nations/CAN?limit=3');
+      const firstResponse = await request(app)
+        .get('/v1/players/nations/CAN?limit=3')
+        .set('Authorization', `Bearer ${token}`);
       const firstPlayers = firstResponse.body.result.data;
       const nextCursor = firstResponse.body.result.nextCursor;
 
       if (nextCursor) {
-        const secondResponse = await request(app).get(`/v1/players/nations/CAN?limit=3&nextCursor=${nextCursor}`);
+        const secondResponse = await request(app)
+          .get(`/v1/players/nations/CAN?limit=3&nextCursor=${nextCursor}`)
+          .set('Authorization', `Bearer ${token}`);
         const secondPlayers = secondResponse.body.result.data;
 
         expect(secondResponse.status).toBe(200);
@@ -466,12 +600,16 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should handle cursor at specific player_id', async () => {
-      const firstResponse = await request(app).get('/v1/players/nations/CAN?limit=2');
+      const firstResponse = await request(app)
+        .get('/v1/players/nations/CAN?limit=2')
+        .set('Authorization', `Bearer ${token}`);
       const players = firstResponse.body.result.data;
 
       if (players.length === 2) {
         const cursorPlayerId = players[1].player_id;
-        const paginatedResponse = await request(app).get(`/v1/players/nations/CAN?limit=5&nextCursor=${cursorPlayerId}`);
+        const paginatedResponse = await request(app)
+          .get(`/v1/players/nations/CAN?limit=5&nextCursor=${cursorPlayerId}`)
+          .set('Authorization', `Bearer ${token}`);
 
         expect(paginatedResponse.status).toBe(200);
         const paginatedPlayers = paginatedResponse.body.result.data;
@@ -482,35 +620,45 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
 
   describe('Query parameter validation', () => {
     it('should reject negative limit', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=-5');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=-5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject negative nextCursor', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?nextCursor=-10');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?nextCursor=-10')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject non-integer limit', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=5.5');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=5.5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject non-numeric limit', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=abc');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=abc')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject zero limit', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=0');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=0')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -520,42 +668,54 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
 
   describe('Nation parameter validation', () => {
     it('should reject nation code with less than 3 letters', async () => {
-      const response = await request(app).get('/v1/players/nations/CA');
+      const response = await request(app)
+        .get('/v1/players/nations/CA')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject nation code with more than 3 letters', async () => {
-      const response = await request(app).get('/v1/players/nations/CANA');
+      const response = await request(app)
+        .get('/v1/players/nations/CANA')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject nation code with special characters', async () => {
-      const response = await request(app).get('/v1/players/nations/CA@');
+      const response = await request(app)
+        .get('/v1/players/nations/CA@')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject nation code with numbers', async () => {
-      const response = await request(app).get('/v1/players/nations/CA1');
+      const response = await request(app)
+        .get('/v1/players/nations/CA1')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject non-existent nation codes', async () => {
-      const response = await request(app).get('/v1/players/nations/ABC');
+      const response = await request(app)
+        .get('/v1/players/nations/ABC')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
     });
 
     it('should accept lowercase nation code and convert to uppercase', async () => {
-      const response = await request(app).get('/v1/players/nations/can');
+      const response = await request(app)
+        .get('/v1/players/nations/can')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -565,7 +725,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should accept mixed case nation code and convert to uppercase', async () => {
-      const response = await request(app).get('/v1/players/nations/cAn');
+      const response = await request(app)
+        .get('/v1/players/nations/cAn')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -577,14 +739,18 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
 
   describe('Response format', () => {
     it('should always include success field as true for valid requests', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.body).toHaveProperty('success');
       expect(response.body.success).toBe(true);
     });
 
     it('should have properly structured data object', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=1');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=1')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.body.result).toHaveProperty('data');
       expect(response.body.result).toHaveProperty('nextCursor');
@@ -592,7 +758,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return result as array wrapper with data property', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=5');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=5')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body.result).toHaveProperty('data');
@@ -602,7 +770,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
 
   describe('Data types and validation', () => {
     it('should return player_id as number', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=1');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=1')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       if (response.body.result.data.length > 0) {
@@ -611,7 +781,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return first_name and last_name as strings', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=1');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=1')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       if (response.body.result.data.length > 0) {
@@ -624,7 +796,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return nationality as string matching the requested nation code', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=1');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=1')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       if (response.body.result.data.length > 0) {
@@ -634,7 +808,9 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
     });
 
     it('should return primary_position as string', async () => {
-      const response = await request(app).get('/v1/players/nations/CAN?limit=1');
+      const response = await request(app)
+        .get('/v1/players/nations/CAN?limit=1')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       if (response.body.result.data.length > 0) {
@@ -646,8 +822,12 @@ describe('GET /v1/players/nations/:nation (Integration)', () => {
 
   describe('Different nationalities', () => {
     it('should return different players for different nationalities', async () => {
-      const canadaResponse = await request(app).get('/v1/players/nations/CAN?limit=1');
-      const usaResponse = await request(app).get('/v1/players/nations/USA?limit=1');
+      const canadaResponse = await request(app)
+        .get('/v1/players/nations/CAN?limit=1')
+        .set('Authorization', `Bearer ${token}`);
+      const usaResponse = await request(app)
+        .get('/v1/players/nations/USA?limit=1')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(canadaResponse.status).toBe(200);
       expect(usaResponse.status).toBe(200);
