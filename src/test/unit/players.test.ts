@@ -11,8 +11,10 @@ jest.mock('../../config/prisma', () => ({
     },
   },
 }));
+jest.mock('../../services/redisCacheService');
 
 import { prisma } from '../../config/prisma';
+import { RedisCacheService } from '../../services/redisCacheService';
 
 // Helper function to create an authenticated request
 const createAuthenticatedRequest = (token = 'valid-test-token') => {
@@ -26,15 +28,22 @@ const createAuthenticatedRequest = (token = 'valid-test-token') => {
       username: 'testuser',
     },
   };
-  
+
   (prisma.session.findUnique as jest.Mock).mockResolvedValue(mockSession);
   return token;
+};
+
+// Helper function to setup cache mock to always return null (cache miss)
+const setupCacheMiss = () => {
+  (RedisCacheService.prototype.get as jest.Mock).mockResolvedValue(null);
+  (RedisCacheService.prototype.set as jest.Mock).mockResolvedValue(undefined);
 };
 
 describe('GET /v1/players/all', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     createAuthenticatedRequest();
+    setupCacheMiss();
   });
 
   describe('Valid parameter values', () => {
@@ -313,6 +322,7 @@ describe('GET /v1/players/nations', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     createAuthenticatedRequest();
+    setupCacheMiss();
   })
 
   describe('Valid parameter values', () => {
@@ -642,10 +652,11 @@ describe('GET /v1/players/nations', () => {
   })
 })
 
-describe('GET /v1/players/all', () => {
+describe('GET /v1/players/all - Duplicate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     createAuthenticatedRequest();
+    setupCacheMiss();
   })
 
   describe('Valid parameter values', () => {
