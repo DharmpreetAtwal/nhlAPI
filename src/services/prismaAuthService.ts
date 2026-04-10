@@ -2,31 +2,11 @@ import bcrypt from "bcrypt";
 import { prisma } from "../config/prisma";
 import { ConflictError, UnauthorizedError } from "../errors/httpClientErrors";
 import crypto from "crypto";
-
-interface RegisterInput {
-    email: string;
-    username?: string;
-    password: string;
-}
-
-interface LoginInput {
-    email: string;
-    password: string;
-}
-
-interface AuthResponse {
-    token: string;
-    expiresAt: Date;
-    user: {
-        id: string;
-        email: string;
-        username: string | null;
-    };
-}
+import { IAuthService, RegisterInput, LoginInput, AuthResponse } from "../interfaces/iAuthService";
 
 const SESSION_EXPIRY_HOURS = 24;
 
-export class PrismaAuthService {
+export class PrismaAuthService implements IAuthService {
     async register(input: RegisterInput): Promise<AuthResponse> {
         const existingUser = await prisma.user.findFirst({
             where: {

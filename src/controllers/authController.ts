@@ -1,18 +1,18 @@
 import { Request, Response, NextFunction } from "express";
-import { PrismaAuthService } from "../services/prismaAuthService";
+import { IAuthService } from "../interfaces/iAuthService";
 
 export class AuthController {
-    private prismaAuthService: PrismaAuthService;
+    private authService: IAuthService;
 
-    constructor(prismaAuthService: PrismaAuthService) {
-        this.prismaAuthService = prismaAuthService;
+    constructor(authService: IAuthService) {
+        this.authService = authService;
     }
 
     register = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { email, username, password } = req.body;
 
-            const result = await this.prismaAuthService.register({
+            const result = await this.authService.register({
                 email,
                 username,
                 password
@@ -32,7 +32,7 @@ export class AuthController {
         try {
             const { email, password } = req.body;
 
-            const result = await this.prismaAuthService.login({
+            const result = await this.authService.login({
                 email,
                 password
             });

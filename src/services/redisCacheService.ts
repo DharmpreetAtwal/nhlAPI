@@ -1,6 +1,7 @@
 import Redis from "ioredis";
+import { ICacheService } from "../interfaces/iCacheService";
 
-export class RedisCacheService {
+export class RedisCacheService implements ICacheService {
     private readonly client: Redis;
 
     constructor(redisUrl: string) {
